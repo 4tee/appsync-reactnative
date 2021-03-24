@@ -6,8 +6,7 @@
  * @flow strict-local
  */
 
-import React from 'react';
-import type {Node} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -18,13 +17,13 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {Colors, Header} from 'react-native/Libraries/NewAppScreen';
+
+import Amplify, {API, graphqlOperation} from 'aws-amplify';
+import awsmobile from './aws-exports';
+import {listEvents} from './graphql/queries';
+
+Amplify.configure(awsmobile);
 
 const Section = ({children, title}): Node => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -53,7 +52,18 @@ const Section = ({children, title}): Node => {
 };
 
 const App: () => Node = () => {
+  useEffect(() => {
+    async function getData() {
+      const events = await API.graphql(graphqlOperation(listEvents));
+      const countries = events.data.listEvents.items.map(x => x.where);
+      console.log(countries);
+      setData(countries);
+    }
+    getData();
+  }, []);
+
   const isDarkMode = useColorScheme() === 'dark';
+  const [data, setData] = useState();
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
@@ -70,20 +80,7 @@ const App: () => Node = () => {
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+          <Section title="Data">{JSON.stringify(data)}</Section>
         </View>
       </ScrollView>
     </SafeAreaView>
